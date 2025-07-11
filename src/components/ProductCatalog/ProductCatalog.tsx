@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { getProducts } from '@/lib/api/products'; // adjust path if needed
+import { getProducts } from '@/lib/api/products';
+import AddProductModal from './AddProductModal'; // Adjust path if needed
 
 type Product = {
   id: string;
@@ -18,6 +19,7 @@ const ProductCatalog: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -47,14 +49,13 @@ const ProductCatalog: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Product Catalog</h1>
-       <button
-  onClick={() => setShowModal(true)}
-  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
->
-  <Plus className="w-5 h-5" />
-  <span>Add New Product</span>
-</button>
-
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+        >
+          <Plus className="w-5 h-5" />
+          <span>Add New Product</span>
+        </button>
       </div>
 
       {/* Filters */}
@@ -100,8 +101,7 @@ const ProductCatalog: React.FC = () => {
               <div className="aspect-w-16 aspect-h-9 bg-gray-200">
                 <img
                   src={
-                    product.image ??
-                    'https://via.placeholder.com/300x200?text=No+Image'
+                    product.image ?? 'https://via.placeholder.com/300x200?text=No+Image'
                   }
                   alt={product.name}
                   className="w-full h-48 object-cover"
@@ -148,6 +148,18 @@ const ProductCatalog: React.FC = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Add Product Modal */}
+      {showModal && (
+        <AddProductModal
+          onClose={() => setShowModal(false)}
+          onProductAdded={async () => {
+            const updated = await getProducts();
+            setProducts(updated);
+            setShowModal(false);
+          }}
+        />
       )}
     </div>
   );
