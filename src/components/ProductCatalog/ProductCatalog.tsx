@@ -1,78 +1,45 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { getProducts } from '@/lib/api/products'; // adjust path if needed
+
+type Product = {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  sizesAvailable: string[];
+  price: number;
+  description?: string;
+  image?: string;
+};
 
 const ProductCatalog: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const products = [
-    {
-      id: 1,
-      image: 'https://images.pexels.com/photos/996329/pexels-photo-996329.jpeg',
-      name: 'Premium Wool Suit',
-      sku: 'GE-SUIT-001',
-      category: 'Suits',
-      sizesAvailable: ['M', 'L', 'XL'],
-      price: 6800,
-      description: 'Elegant wool suit perfect for formal occasions'
-    },
-    {
-      id: 2,
-      image: 'https://images.pexels.com/photos/298863/pexels-photo-298863.jpeg',
-      name: 'Leather Oxford Shoes',
-      sku: 'GE-SHOE-002',
-      category: 'Shoes',
-      sizesAvailable: ['40', '41', '42', '43'],
-      price: 4200,
-      description: 'Handcrafted leather Oxford shoes for the discerning gentleman'
-    },
-    {
-      id: 3,
-      image: 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg',
-      name: 'Cotton Dress Shirt',
-      sku: 'GE-SHIRT-003',
-      category: 'Shirts',
-      sizesAvailable: ['S', 'M', 'L', 'XL'],
-      price: 1200,
-      description: 'Premium cotton dress shirt with French cuffs'
-    },
-    {
-      id: 4,
-      image: 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg',
-      name: 'Silk Tie Collection',
-      sku: 'GE-TIE-004',
-      category: 'Accessories',
-      sizesAvailable: ['One Size'],
-      price: 1800,
-      description: 'Luxurious silk ties in various patterns and colors'
-    },
-    {
-      id: 5,
-      image: 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg',
-      name: 'Leather Belt',
-      sku: 'GE-BELT-005',
-      category: 'Accessories',
-      sizesAvailable: ['30', '32', '34', '36'],
-      price: 1000,
-      description: 'Genuine leather belt with gold-plated buckle'
-    },
-    {
-      id: 6,
-      image: 'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg',
-      name: 'Formal Trousers',
-      sku: 'GE-TROU-006',
-      category: 'Trousers',
-      sizesAvailable: ['30', '32', '34', '36', '38'],
-      price: 2400,
-      description: 'Tailored formal trousers in premium fabric'
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await getProducts();
+        setProducts(data || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    fetchData();
+  }, []);
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === '' || product.category === filterCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -115,54 +82,69 @@ const ProductCatalog: React.FC = () => {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.map((product) => (
-          <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-              <img 
-                src={product.image} 
-                alt={product.name}
-                className="w-full h-48 object-cover"
-              />
-            </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-                <span className="text-sm text-gray-500">{product.sku}</span>
+      {loading ? (
+        <p className="text-gray-600">Loading products...</p>
+      ) : filteredProducts.length === 0 ? (
+        <p className="text-gray-600">No products found.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+            >
+              <div className="aspect-w-16 aspect-h-9 bg-gray-200">
+                <img
+                  src={
+                    product.image ??
+                    'https://via.placeholder.com/300x200?text=No+Image'
+                  }
+                  alt={product.name}
+                  className="w-full h-48 object-cover"
+                />
               </div>
-              <p className="text-sm text-gray-600 mb-3">{product.description}</p>
-              <div className="flex items-center justify-between mb-3">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                  {product.category}
-                </span>
-                <span className="text-lg font-bold text-green-600">
-                  KES {product.price.toLocaleString()}
-                </span>
-              </div>
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-1">Available Sizes:</p>
-                <div className="flex flex-wrap gap-1">
-                  {product.sizesAvailable.map((size) => (
-                    <span key={size} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                      {size}
-                    </span>
-                  ))}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
+                  <span className="text-sm text-gray-500">{product.sku}</span>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">{product.description}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    {product.category}
+                  </span>
+                  <span className="text-lg font-bold text-green-600">
+                    KES {product.price.toLocaleString()}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-1">Available Sizes:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(product.sizesAvailable || []).map((size) => (
+                      <span
+                        key={size}
+                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
+                      >
+                        {size}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1">
+                    <Edit className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                  <button className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-1">
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </button>
                 </div>
               </div>
-              <div className="flex space-x-2">
-                <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1">
-                  <Edit className="w-4 h-4" />
-                  <span>Edit</span>
-                </button>
-                <button className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center space-x-1">
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete</span>
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
